@@ -98,7 +98,7 @@ export default class Player extends HTMLElement {
         highpassbtn2 = this.shadowRoot.querySelector('#highpassbtn2');
         lowpassbtn1 = this.shadowRoot.querySelector('#lowpassbtn2');
         lowpassbtn2 = this.shadowRoot.querySelector('#lowpassbtn2');
-        if (volumeSlider1 != null)
+        if (volumeSlider1 != null) //set up after both players are set up
         {
             shadowRoot.innerHTML += this.createSliders();
             rotary1 = this.shadowRoot.querySelector('#rotaryswitch1');
@@ -132,7 +132,7 @@ export default class Player extends HTMLElement {
         const cnvEl = this.shadowRoot.querySelector("#cnv");
         this.cnvCtx = cnvEl.getContext("2d");
 
-        this.source.connect(this.analyser);
+        this.source.connect(this.analyser);         //connect the nodes
         this.analyser.connect(this.biquadFilter);
         this.biquadFilter.connect(this.gainNode);
      
@@ -143,7 +143,7 @@ export default class Player extends HTMLElement {
     
    
 
-	if (volumeSlider1 == null) {
+	if (volumeSlider1 == null) { //set up player one's fields and listener
         volumeSlider1 = this.shadowRoot.querySelector('#musicVolRange');
 		volumeSlider1.addEventListener("change", function() {
                 gainage1.gain.value = this.value / 127;
@@ -158,7 +158,7 @@ export default class Player extends HTMLElement {
             filter1.frequency.setValueAtTime(0, audioManager.ctx.currentTime)
 	}
 	else {
-        	volumeSlider2 = this.shadowRoot.querySelector('#musicVolRange');
+        	volumeSlider2 = this.shadowRoot.querySelector('#musicVolRange'); //set up player one's fields and listener
 		    volumeSlider2.addEventListener("change", function() {
                 gainage2.gain.value = this.value / 127;
                 curVol2 = gainage2.gain.value;
@@ -336,6 +336,9 @@ export default class Player extends HTMLElement {
 
     }
 
+    /**
+     * draw the waveform of the soundfile using rectangles on a canvas
+     */
     update() {
         this.analyser.getByteTimeDomainData(this.dataArray);
         this.cnvCtx.clearRect(0, 0, 1000, 100);
@@ -354,7 +357,9 @@ export default class Player extends HTMLElement {
     
     }
  
-      
+    /** Setting up listeners for the play and mute button
+     * 
+     */  
     connectedCallback() {
         const button = this.shadowRoot.querySelector('#play');
         const mute = this.shadowRoot.querySelector('#volume');
@@ -363,11 +368,11 @@ export default class Player extends HTMLElement {
 
         button.addEventListener('click', this.handleButtonClick.bind(this));
         mute.addEventListener('click', this.changeAudioVolume.bind(this));
-        
-        window.addEventListener('load', onDocLoaded, false);        
     }
 
-    
+    /**
+     * the function to handle click on play button
+     */
     handleButtonClick() {
         if (this.audio.paused) {
             console.log(this.gainNode.gain.value);
@@ -380,12 +385,17 @@ export default class Player extends HTMLElement {
         }
     }
     
-
+    /**
+     * display how much of the song has already played and how much is left
+     */
     updateAudioTime() {
         const progress = this.audio.currentTime / this.audio.duration;
         this.elProgress.style.width = (progress * 100) + '%';
     }
 
+    /**
+     * the function to handle click on mute button
+     */
     changeAudioVolume(value) {
 
         if (this.gainNode.gain.value != 0) {
@@ -428,40 +438,11 @@ function midiFailure() {
     console.log("Failure: Midi is not working!");
 }
 
-
-function byId(e){
-    return document.getElementById(e);
-}
-
-//window.addEventListener('load', onDocLoaded, false);
-
-function onDocLoaded()
-{
-    //byId('mFileInput').addEventListener('change', onChosenFileChange, false);
-}
-
-function onChosenFileChange(evt)
-{
-    let fileType = this.files[0].type;
-
-    if (fileType.indexOf('x-player') != -1)
-        loadFileObject(this.files[0], onSoundLoaded);
-
-}
-
-function loadFileObject(fileObj, loadedCallback)
-{
-    let reader = new FileReader();
-    reader.onload = loadedCallback;
-    reader.readAsDataURL( fileObj );
-}
-
-function onSoundLoaded(evt)
-{
-    byId('sound').src = evt.target.result;
-    byId('sound').audio.play();
-}
-
+/** Toggles the highpass filter on or off
+ * 
+ * @param {*} filter the filter node for which the highpass is supposed to be set up/deactivated 
+ * @param {*} filteron true if filter is supposed to be on
+ */
 function FilterHighPass(filter, filteron)
 {
     if (filteron)
@@ -476,6 +457,11 @@ function FilterHighPass(filter, filteron)
     }
 }   
 
+/** Toggles the lowpass filter on or off
+ * 
+ * @param {*} filter the filter node for which the lowpass is supposed to be set up/deactivated 
+ * @param {*} filteron true if filter is supposed to be on
+ */
 function Filterlowpass(filter, filteron)
 {
     if (filteron)
@@ -490,14 +476,23 @@ function Filterlowpass(filter, filteron)
     }
 }  
 
+/** Activates an echo filter for the audio
+ * 
+ * @param {*} delay  the delaynode
+ * @param {*} feedback  the feedback node
+ * @param {*} delayon  true if echo is already active for the source
+ * @param {*} source the source audio
+ * @param {*} filter the biquadfilter node connected to the audiosource
+ * @param {*} analyser the analyser node connected to the audiosource
+ */
 function HallFilter(delay, feedback, delayon, source, filter, analyser)
 {
     console.log(delayon)
     if (!delayon)
     {
-        delay.delayTime.value = 0.2;
+        delay.delayTime.value = 0.2; //the time before the echo sounds
 
-        feedback.gain.value = 0.3;
+        feedback.gain.value = 0.3; //the echo is slowly fading out over time
 
         delay.connect(feedback)
         feedback.connect(delay)
@@ -522,22 +517,33 @@ function onMidiMessage(event) {
 
     console.log ("command: "+cmd +"btnID "+btnID+"value: "+ value)
 
+    /** Controls the delay of the Echo effect for the first track
+     * 
+     */
     if (btnID == 1 && cmd == 11)
     {
         delay1.delayTime.value = value/127;
     }
 
+     /** Controls the feedback of the Echo effect for the first track
+     * 
+     */
     if (btnID == 2 && cmd == 11)
     {
         feedback1.gain.value = value/127
     }
 
-
+     /** Controls the delay of the Echo effect for the second track
+     * 
+     */
     if (btnID == 4 && cmd == 11)
     {
         delay2.delayTime.value = value/127;
     }
 
+    /** Controls the feedback of the Echo effect for the second track
+     * 
+     */
     if (btnID == 5 && cmd == 11)
     {
         feedback2.gain.value = value/127
@@ -622,6 +628,9 @@ function onMidiMessage(event) {
     
     }
 
+     /** activates the echo effect for the first track
+      * 
+      */
     if (btnID == 16 && cmd == 9)
     {
        
@@ -629,6 +638,9 @@ function onMidiMessage(event) {
         delayon1 = true;
     }
 
+    /** activates the echo effect for the second track
+     * 
+     */
     if (btnID == 17 && cmd == 9)
     {
        
@@ -636,7 +648,9 @@ function onMidiMessage(event) {
         delayon2 = true;
     }
 
-
+    /** deactivates all echo effects
+     * 
+     */
     if (btnID == 18 && cmd == 9)
     {
         if (delayon1)
@@ -666,12 +680,18 @@ function onMidiMessage(event) {
        
     }
     
+    /** activates the highpass filter for the first track
+     * 
+     */
     if (btnID == 19 && cmd == 9)
     {
         filteron1 = true;
         FilterHighPass(filter1, filteron1);
     }
 
+     /** deactivates the highpass filter for the first track
+     * 
+     */
     if (btnID == 20 && cmd == 9)
     {
         filteron1 = false;
@@ -690,13 +710,18 @@ function onMidiMessage(event) {
         rotary16.value = value;
        
     }
-
+     /** activates the highpass filter for the second track
+     * 
+     */
     if (btnID == 23 && cmd == 9)
     {
         filteron2 = true;
         FilterHighPass(filter2, filteron2);
     }
 
+     /** deactivates the highpass filter for the first track
+     * 
+     */
     if (btnID == 24 && cmd == 9)
     {
         filteron2 = false;
@@ -705,12 +730,18 @@ function onMidiMessage(event) {
         FilterHighPass(filter2, filteron2);
     }
 
+     /** activates the lowpass filter for the first track
+     * 
+     */
     if (btnID == 27 && cmd == 9)
     {
         filteron1 = true;
         Filterlowpass(filter1, filteron1);
     }
 
+     /** deactivates the lowpass filter for the first track
+     * 
+     */
     if (btnID == 28 && cmd == 9)
     {
         filteron1 = false;
@@ -719,12 +750,19 @@ function onMidiMessage(event) {
         Filterlowpass(filter1, filteron1);
     }
 
+
+     /** activates the lowpass filter for the second track
+     * 
+     */
     if (btnID == 31 && cmd == 9)
     {
         filteron2 = true;
         Filterlowpass(filter2, filteron2);
     }
 
+     /** deactivates the lowpass filter for the second track
+     * 
+     */
     if (btnID == 32 && cmd == 9)
     {
         filteron2 = false;
@@ -733,44 +771,64 @@ function onMidiMessage(event) {
         Filterlowpass(filter2, filteron2);
     }
 
-
+    /** changes the frequenzy threshold for the highpass filter of the first track
+     * 
+     */
     if (btnID == 48 && cmd == 11) {
         gain1.value = value;
         if (filteron1 && filter1.type == "highpass")
             filter1.frequency.setValueAtTime(value*188, audioManager.ctx.currentTime)
     }
 
+    /** starts playing the first track
+     * 
+     */
     if (btnID == 48 && cmd == 8) {
         audio1.play()
     }
 
+     /** changes the frequenzy threshold for the highpass filter of the second track
+     * 
+     */
     if (btnID == 49 && cmd == 11) {
         gain2.value = value;
         if (filteron2 && filter2.type  == "highpass")
             filter2.frequency.setValueAtTime(value*188, audioManager.ctx.currentTime)
     }
-
+    /** pauses the first track
+     * 
+     */
     if (btnID == 49 && cmd == 8) {
         audio1.pause()
     }
 
+     /** changes the frequenzy threshold for the lowpass filter of the first track
+     * 
+     */
     if (btnID == 50 && cmd == 11) {
         gain3.value == value
         if (filteron1 && filter1.type == "lowpass")
             filter1.frequency.setValueAtTime(value*188, audioManager.ctx.currentTime)
     }
 
+    /** starts playing the second track
+     * 
+     */
     if (btnID == 50 && cmd == 8) {
         audio2.play()
     }
 
-
+    /** changes the frequenzy threshold for the lowpass filter of the second track
+     * 
+     */
     if (btnID == 51 && cmd == 11) {
         gain4.value = value;
         if (filteron2 && filter2.type  == "lowpass")
             filter2.frequency.setValueAtTime(value*188, audioManager.ctx.currentTime)
     }
-
+    /** pauses thesecond track
+     * 
+     */
     if (btnID == 51 && cmd == 8) {
         audio2.pause()
     }
